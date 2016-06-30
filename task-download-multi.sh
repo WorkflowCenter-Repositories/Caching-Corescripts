@@ -15,18 +15,21 @@ BLOCK_URL=$3
    image=${var,,}
    task="$image-$ver"
 
-ctx logger info "Dowload ${block} on ${CONTAINER_ID}"
+ctx logger info "Dowload ${task} on ${CONTAINER_ID}"
 
 #-----------------------------------------#
 #----------- download the task -----------#
 ctx logger info "download ${block} block"
+flag=0
+sudo docker exec -it ${CONTAINER_ID} [ ! -f tasks/$task.jar ] && flag=1
 
+if [[ $flag = 1 ]]; then
 [ ! -f ~/.TDWF/$task.jar ] && wget -O ~/.TDWF/$task.jar  ${BLOCK_URL}
 
 sudo docker exec -it ${CONTAINER_ID} [ ! -d tasks ] && sudo docker exec -it ${CONTAINER_ID} mkdir tasks
 
 cat ~/.TDWF/$task.jar | sudo docker exec -i ${CONTAINER_ID} sh -c 'cat > tasks/'$task.jar
-
+fi
 #----------- download the task -----------#
 #-----------------------------------------#
 
