@@ -16,7 +16,7 @@ set +e
    base=${IMAGE_NAME//['/:']/_}
    tag=$(git describe --exact-match --tags $(git log -n1 --pretty='%h'))
    branch=$(git rev-parse --abbrev-ref HEAD)         
-   wf=${PWD##*/}    # get WF name
+   wf=$1                #${PWD##*/}    # get WF name
    if [[ -z $tag ]]; then
      image=$base-$wf-$branch
    else 
@@ -30,12 +30,12 @@ if [[ "$(docker images -q dtdwd/${image} 2> /dev/null)" != "" ]]; then
  ctx logger info "local task image"
  Image=dtdwd/${image}
 else 
-   ssh remote@192.168.56.103 test -f "DTDWD/${image}.tar.gz" && flag=1
+   ssh cache@192.168.56.103 test -f "DTDWD/${image}.tar.gz" && flag=1
    #ctx logger info "$flag"
    if [[  $flag = 1  ]]; then
       ctx logger info "cached task image"
       set +e           
-          scp -P 22 remote@192.168.56.103:DTDWD/${image}.tar.gz ${image}.tar.gz
+          scp -P 22 cache@192.168.56.103:DTDWD/${image}.tar.gz ${image}.tar.gz
           zcat --fast ${image}.tar.gz | docker load
           rm ${image}.tar.gz
       set -e    
@@ -55,11 +55,11 @@ else
              Image=${IMAGE_NAME}
           else
               b=$(basename $IMAGE_NAME)
-              if ssh remote@192.168.56.103 stat DTDWD/$b.tar.gz \> /dev/null 2\>\&1    #cached specified image
+              if ssh cache@192.168.56.103 stat DTDWD/$b.tar.gz \> /dev/null 2\>\&1    #cached specified image
               then
                 set +e
                   #echo "from local repo."
-                  scp -P 22 remote@192.168.56.103:DTDWD/$b.tar.gz $b.tar.gz
+                  scp -P 22 cache@192.168.56.103:DTDWD/$b.tar.gz $b.tar.gz
                   zcat --fast $b.tar.gz | docker load
                   Image=${IMAGE_NAME}
                   rm $b.tar.gz

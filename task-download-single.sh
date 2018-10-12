@@ -8,16 +8,15 @@ BLOCK_NAME=$(ctx node properties block_name)
 BLOCK_URL=$3
 
 
-###### get task version ######
-   path=${BLOCK_URL%/*}   
-   ver=$(echo ${path##*/})
-###### get task name without extension ######
-   var=${BLOCK_NAME%.*}
-   image=${var,,}
-   task="$image-$ver"
+###### get task ID ######
+   
+   source $PWD/Core-LifecycleScripts/get-task-ID.sh
+   var=$(func $BLOCK_URL)
+   task=${var,,}
 
 ctx logger info "Dowload ${block} on ${CONTAINER_ID}"
-
+# Start Timestamp
+STARTTIME=`date +%s.%N`
 #-----------------------------------------#
 #----------- download the task -----------#
 ctx logger info "download ${block} block"
@@ -31,7 +30,12 @@ cat ~/.TDWF/$task.jar | sudo docker exec -i ${CONTAINER_ID} sh -c 'cat > tasks/'
 #----------- download the task -----------#
 #-----------------------------------------#
 
-ctx logger info "after download"
+# End timestamp
+ENDTIME=`date +%s.%N`
+
+# Convert nanoseconds to milliseconds crudely by taking first 3 decimal places
+TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."substr($2,1,3)}'`
+echo "downloading $task task : $TIMEDIFF" | sed 's/[ \t]/, /g' >> ~/list.csv
 
 
 
